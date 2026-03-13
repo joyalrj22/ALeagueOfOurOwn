@@ -67,12 +67,23 @@ const App = () => {
           style={{
             fontSize: "0.95rem",
             color: "#9ca3af",
-            marginBottom: "1.5rem"
+            marginBottom: "1rem"
           }}
         >
           This toy app validates your Netlify CI/CD pipeline by calling a FastAPI
           function deployed on Netlify Functions.
         </p>
+
+        <h2
+          style={{
+            fontSize: "1.25rem",
+            fontWeight: 600,
+            marginBottom: "1.5rem",
+            textAlign: "center"
+          }}
+        >
+          Hello World
+        </h2>
 
         <div
           style={{
