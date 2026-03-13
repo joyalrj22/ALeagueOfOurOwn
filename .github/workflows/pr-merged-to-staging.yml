@@ -1,0 +1,30 @@
+# Require that the PR branch is merged into staging before merging to main.
+# Runs on PRs targeting main; fails if the PR head is not in origin/staging.
+name: PR must be merged to staging
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  pr-merged-to-staging:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch staging
+        run: git fetch origin staging
+
+      - name: Check PR head is merged into staging
+        run: |
+          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          if git merge-base --is-ancestor "$HEAD_SHA" origin/staging 2>/dev/null; then
+            echo "PR head is in staging. Check passed."
+          else
+            echo "::error::This PR cannot be merged to main until its branch is merged into staging. Merge this branch into staging first, then open a PR from staging to main (or merge staging into main)."
+            exit 1
+          fi
