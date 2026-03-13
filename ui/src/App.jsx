@@ -125,7 +125,7 @@ const App = () => {
           <div>
             <span style={{ color: "#e5e7eb" }}>Local dev:</span> run{" "}
             <code>npm install</code> then <code>npm run dev</code> in{" "}
-            <code>frontend/</code>.
+            <code>ui/</code>.
           </div>
           <div>
             <span style={{ color: "#e5e7eb" }}>Netlify dev:</span> run{" "}
