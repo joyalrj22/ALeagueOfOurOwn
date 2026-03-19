@@ -29,5 +29,17 @@ def echo(message: str = "hello from FastAPI on Netlify"):
 
 
 # Netlify uses AWS Lambda under the hood; Mangum adapts the ASGI app.
-handler = Mangum(app)
+#
+# Netlify's Python function runtime expects a callable named `handler(event, context)`.
+# Exporting a plain `handler = Mangum(app)` object can fail function detection/invocation,
+# so we provide an explicit wrapper function.
+mangum_handler = Mangum(app)
+
+
+def handler(event, context):
+  return mangum_handler(event, context)
+
+
+# Some runtimes/documentation refer to `lambda_handler`; keep an alias for compatibility.
+lambda_handler = handler
 

@@ -50,6 +50,13 @@ pip install -r "%~dp0api\requirements.txt"
 if errorlevel 1 goto PipFail
 
 echo.
+echo [dev.cmd] Starting FastAPI backend (uvicorn) on http://localhost:8888 ...
+REM Run backend in the background so netlify dev can continue.
+REM Node proxy function (`api/api.js`) will call `${FASTAPI_BASE}/health`.
+set "FASTAPI_BASE=http://localhost:8888"
+start "" /b "%~dp0.venv\Scripts\uvicorn.exe" api.api:app --host 127.0.0.1 --port 8888 --log-level warning
+
+echo.
 echo [dev.cmd] Starting Netlify dev server (this may take a moment)...
 echo [dev.cmd] When it is ready, open http://localhost:3001/ in your browser.
 cd /d "%~dp0"
