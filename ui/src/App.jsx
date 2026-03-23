@@ -9,7 +9,7 @@ const App = () => {
     const fetchHealth = async () => {
       try {
         // In Netlify, this will resolve to the deployed function.
-        const res = await fetch("/.netlify/functions/api/health");
+        const res = await fetch("/api/health");
         if (!res.ok) {
           throw new Error(`Request failed with status ${res.status}`);
         }

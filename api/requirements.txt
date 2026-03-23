@@ -1,5 +1,0 @@
-# Pinned to ranges so Python 3.7+ can install (0.115.x needs 3.8+)
-fastapi>=0.100,<0.116
-mangum>=0.15,<0.18
-uvicorn>=0.20,<0.33
-

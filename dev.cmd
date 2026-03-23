@@ -33,23 +33,6 @@ cmd /c "npm install --prefix %DEV_UI%"
 if errorlevel 1 goto UIFail
 
 echo.
-echo [dev.cmd] Preparing Python virtual environment for Netlify functions...
-if not exist "%~dp0.venv" goto CreateVenv
-goto VenvReady
-:CreateVenv
-echo [dev.cmd] Creating .venv virtual environment...
-python -m venv "%~dp0.venv"
-if errorlevel 1 goto VenvFail
-:VenvReady
-call "%~dp0.venv\Scripts\activate.bat"
-if errorlevel 1 goto VenvActivateFail
-
-echo.
-echo [dev.cmd] Installing/updating Python dependencies for Netlify functions...
-pip install -r "%~dp0api\requirements.txt"
-if errorlevel 1 goto PipFail
-
-echo.
 echo [dev.cmd] Starting Netlify dev server (this may take a moment)...
 echo [dev.cmd] When it is ready, open http://localhost:3001/ in your browser.
 cd /d "%~dp0"
@@ -69,18 +52,6 @@ echo Install Node.js (which includes npm) and try again.
 set EXIT_CODE=1
 goto End
 
-:NoPython
-echo [dev.cmd] Python 3 is not installed or not on PATH.
-echo Install Python 3 and ensure the \"Add python.exe to PATH\" option is enabled during installation.
-set EXIT_CODE=1
-goto End
-
-:NoPip
-echo [dev.cmd] pip is not installed or not on PATH.
-echo Ensure Python 3 and pip are correctly installed.
-set EXIT_CODE=1
-goto End
-
 :NoNetlify
 echo [dev.cmd] Netlify CLI is not installed or not on PATH.
 echo Install it with: npm install -g netlify-cli
@@ -89,21 +60,6 @@ goto End
 
 :UIFail
 echo [dev.cmd] Failed to install UI dependencies.
-set EXIT_CODE=1
-goto End
-
-:VenvFail
-echo [dev.cmd] Failed to create Python virtual environment.
-set EXIT_CODE=1
-goto End
-
-:VenvActivateFail
-echo [dev.cmd] Failed to activate Python virtual environment.
-set EXIT_CODE=1
-goto End
-
-:PipFail
-echo [dev.cmd] Failed to install Python dependencies.
 set EXIT_CODE=1
 goto End
 
