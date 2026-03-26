@@ -41,15 +41,18 @@ const App = () => {
     fetchLeagueTable(leagueId);
   };
 
-  const handleScoreSubmit = async (entry) => {
+  const handleScoreSubmit = async (entryOrEntries) => {
     try {
-      const res = await fetch(`/.netlify/functions/league-handler/score`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ leagueId: selectedLeagueId, entry })
-      });
-      
-      if (!res.ok) throw new Error("Failed to submit score");
+      const entries = Array.isArray(entryOrEntries) ? entryOrEntries : [entryOrEntries];
+      for (const entry of entries) {
+        const res = await fetch(`/.netlify/functions/league-handler/score`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ leagueId: selectedLeagueId, entry })
+        });
+        
+        if (!res.ok) throw new Error("Failed to submit score");
+      }
       
       // Refresh the table (Optimistic UI would be better, but refresh is simpler for initial MVP)
       fetchLeagueTable(selectedLeagueId);
