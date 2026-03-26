@@ -16,11 +16,11 @@ if errorlevel 1 goto NoNode
 where npm >nul 2>&1
 if errorlevel 1 goto NoNpm
 
-where python >nul 2>&1
-if errorlevel 1 goto NoPython
+REM where python >nul 2>&1
+REM if errorlevel 1 goto NoPython
 
-where pip >nul 2>&1
-if errorlevel 1 goto NoPip
+REM where pip >nul 2>&1
+REM if errorlevel 1 goto NoPip
 
 where netlify >nul 2>&1
 if errorlevel 1 goto NoNetlify
