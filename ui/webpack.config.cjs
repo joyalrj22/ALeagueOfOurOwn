@@ -11,7 +11,7 @@ module.exports = {
     publicPath: "/"
   },
   resolve: {
-    extensions: [".js", ".jsx"]
+    extensions: [".js", ".jsx", ".mjs"]
   },
   module: {
     rules: [
@@ -26,8 +26,14 @@ module.exports = {
         }
       },
       {
+        test: /\.m?js$/,
+        resolve: {
+          fullySpecified: false,
+        },
+      },
+      {
         test: /\.css$/i,
-        use: ["style-loader", "css-loader"]
+        use: ["style-loader", "css-loader", "postcss-loader"]
       }
     ]
   },
