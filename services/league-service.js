@@ -1,12 +1,12 @@
 const leagueRepository = require("../repositories/league-repository");
 
 const leagueService = {
-  calculateTable: (leagueId) => {
-    const league = leagueRepository.getLeagueById(leagueId);
+  calculateTable: async (leagueId) => {
+    const league = await leagueRepository.getLeagueById(leagueId);
     if (!league) throw new Error("League not found");
 
-    const entries = leagueRepository.getEntriesByLeagueId(leagueId);
-    const members = leagueRepository.getMembersByLeagueId(leagueId);
+    const entries = await leagueRepository.getEntriesByLeagueId(leagueId);
+    const members = await leagueRepository.getMembersByLeagueId(leagueId);
     const { scoringConfig } = league;
 
     const userStats = {};
@@ -65,13 +65,13 @@ const leagueService = {
     return table;
   },
 
-  submitScore: (leagueId, entryData) => {
-    const league = leagueRepository.getLeagueById(leagueId);
+  submitScore: async (leagueId, entryData) => {
+    const league = await leagueRepository.getLeagueById(leagueId);
     if (!league) throw new Error("League not found");
 
     // For match type, we usually want to record both sides.
     // However, for simplicity in this MVP, we'll just record what the admin sends.
-    const entry = leagueRepository.addEntry({
+    const entry = await leagueRepository.addEntry({
       leagueId,
       ...entryData,
     });
