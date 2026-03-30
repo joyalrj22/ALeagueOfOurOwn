@@ -1,67 +1,97 @@
-# ALeagueOfOurOwn
-Leaguey McLeagueFace
+# A League of Our Own 🏆
 
-Prod: https://gilded-piroshki-2bd9dc.netlify.app/
-Staging: https://staging--gilded-piroshki-2bd9dc.netlify.app/
+A multi-tenant league management platform that supports any competition type—from sports and eSports to casual gaming.
 
-## Local Development
+## 🚀 Overview
 
-This project is a small React UI (`ui/`) backed by a FastAPI app deployed as a Netlify Function (`api/api.py`). The simplest way to run everything together locally is to use the Netlify CLI.
+**A League of Our Own** is a full-stack application that enables users to create and manage custom leagues. Administrators have full control over scoring rules, roster management, and scheduling, while participants can track their progress through real-time standings and dynamic analytics.
+
+## 🏗️ Architecture: Service-Oriented (SOA)
+
+The backend follows a microservice-inspired architecture using Netlify Functions. A **Public API Gateway** provides a unified entry point for the frontend, orchestrating requests to specialized domain services.
+
+```mermaid
+graph TD
+    subgraph "Frontend"
+        UI[React & Tailwind CSS Dashboard]
+    end
+
+    subgraph "Backend (Netlify Functions)"
+        GW[Public API Gateway]
+        AUTH[Auth Service]
+        LC[League Creator Service]
+        REG[Registration Service]
+        COMP[Competition Service]
+        SCH[Scheduler Service]
+        STA[Standings Service]
+        ANA[Analytics Service]
+    end
+
+    subgraph "Data Layer"
+        DB[(MySQL / Mock Persistence)]
+    end
+
+    UI --> GW
+    GW --> AUTH
+    GW --> LC
+    GW --> REG
+    GW --> COMP
+    GW --> SCH
+    GW --> STA
+    GW --> ANA
+
+    AUTH --> DB
+    LC --> DB
+    REG --> DB
+    COMP --> DB
+    SCH --> DB
+    STA --> DB
+    ANA --> DB
+```
+
+### Services & Responsibilities
+
+- **Public API Gateway**: Single entry point for all frontend requests. Handles routing, global validation, and request orchestration.
+- **Auth Service**: Manages user identity, JWT-based mock authentication, and session handling.
+- **League Creator Service**: Manages the lifecycle of a league, including initial setup, metadata updates, and configuration of scoring rules.
+- **Registration Service**: Handles user enrollment into leagues, invite code generation, and validation.
+- **Competition Service**: Manages the active list of members (roster) and is responsible for recording/updating game results and participation data.
+- **Scheduler Service**: Responsible for organizing seasons and generating game schedules/match timings.
+- **Standings Service**: Calculates real-time league tables, user rankings, and overall performance metrics based on game results.
+- **Analytics Service**: Provides advanced insights, historical trend analysis, and performance projections for players and leagues.
+
+## 🛠️ Tech Stack
+
+- **Frontend**: React, Tailwind CSS, Lucide-react.
+- **Backend**: Netlify Functions (Node.js/Vanilla JS).
+- **Database**: MySQL (using `mockData.js` for session persistence during developement).
+- **Auth**: JWT-based mock authentication.
+
+## 💻 Local Development
 
 ### Prerequisites
 
-- **Node.js**: v18+ recommended (includes `npm`).
-- **Python 3**: v3.9+ recommended, with `pip` available on your `PATH`.
-- **Netlify CLI**: install globally with:
+- **Node.js**: v18+ recommended.
+- **Netlify CLI**: Install globally: `npm install -g netlify-cli`.
 
-  ```bash
-  npm install -g netlify-cli
-  ```
+### Commands
 
-### One-shot local dev on Windows (recommended)
-
-From the repo root:
-
-```bash
-.\dev.cmd
-```
-
-What this does:
-
-- **Installs UI dependencies** in `ui/`.
-- **Creates/uses a local Python virtualenv** in `.venv` and installs backend deps from `api/requirements.txt`.
-- **Starts the Netlify dev server**, which in turn runs `npm --prefix ui run dev` on port 3000 and proxies everything through `http://localhost:8888/` (including the FastAPI Netlify Function).
-
-Once it’s running:
-
-- **App UI**: `http://localhost:8888/`
-- **API health endpoint**: `http://localhost:8888/.netlify/functions/api/health`
-
-You can re-run `.\dev.cmd` any time; it will re-use existing `node_modules` and `.venv` if they already exist.
-
-### Manual local dev (alternative)
-
-If you prefer to do things manually instead of using `dev.cmd`, you can run:
-
-```bash
-npm --prefix ui install
-pip install -r api/requirements.txt
-netlify dev
-```
-
-Run those commands from the repo root. This gives you the same behavior as `dev.cmd`: the React app and the FastAPI Netlify Function are both served together by the Netlify dev server.
-
-## Troubleshooting
-
-- **`netlify` is not recognized**:
-  - Make sure you installed the Netlify CLI globally with `npm install -g netlify-cli`.
-  - Close and reopen your terminal so the updated `PATH` is picked up.
-
-- **Port 8888 already in use**:
-  - Either stop the process currently listening on that port, or run:
-
+1.  **Install dependencies**:
     ```bash
-    netlify dev --port 3000
+    npm install
+    cd ui && npm install
     ```
 
-    (If you use a non-default port, adjust URLs accordingly, e.g. `http://localhost:3000/` and `http://localhost:3000/.netlify/functions/api/health`.)
+2.  **Start Development Server**:
+    From the root directory:
+    ```bash
+    netlify dev
+    ```
+    This launches the React app and Netlify Functions proxy on `http://localhost:8888`.
+
+## 📈 Project Roadmap
+
+We are currently transitioning from a prototype architecture to the full Service-Oriented (SOA) model. The legacy `services/league-service.js` is being phased out in favor of the specialized services in the `services/` directory.
+
+---
+Created with ❤️ by the ALeagueOfOurOwn Team.
