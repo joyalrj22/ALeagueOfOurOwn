@@ -30,4 +30,4 @@ The backend is structured as a series of microservices accessible through a **Pu
 # Technical Constraints
 - **Optimistic UI**: Implement basic state-cloning to show score updates immediately.
 - **RESTful**
-- **Mock Persistence**: Create a `mockData.js` file that acts as a singleton for the session.
+- **Persistence**: SQLite database (`league.db`) for local development, providing a stable schema for future MySQL migration.

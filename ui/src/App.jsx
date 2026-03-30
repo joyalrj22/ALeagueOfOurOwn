@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { Layout, LayoutDashboard, Settings, Trophy, LogOut, ChevronRight, Sparkles } from 'lucide-react';
+import { Layout, LayoutDashboard, Settings, Trophy, LogOut, ChevronRight, Sparkles, Plus } from 'lucide-react';
 import Leaderboard from './components/Leaderboard';
 import AdminScoreEntry from './components/AdminScoreEntry';
+import LeagueCreator from './components/LeagueCreator';
 
 const App = () => {
   const [view, setView] = useState('dashboard'); // 'dashboard' or 'league'
@@ -11,11 +12,14 @@ const App = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Mock "My Leagues" for the dashboard
-  const myLeagues = [
+  // Mock "My Leagues" for the dashboard - initialized with some data
+  const [myLeagues, setMyLeagues] = useState([
     { id: 'league-1', name: 'Global FIFA Tournament', type: 'match' },
     { id: 'league-2', name: 'Office Chess League', type: 'rank' }
-  ];
+  ]);
+
+  // We should ideally fetch these from /api/league-handler/leagues (to be implemented)
+  // For now, we'll just handle the local refresh after creation.
 
   const fetchLeagueTable = async (leagueId) => {
     setLoading(true);
@@ -39,6 +43,11 @@ const App = () => {
     setSelectedLeagueId(leagueId);
     setView('league');
     fetchLeagueTable(leagueId);
+  };
+
+  const handleLeagueCreated = (newLeague) => {
+    setMyLeagues([...myLeagues, { id: newLeague.id, name: newLeague.name, type: newLeague.scoringConfig.type }]);
+    // Success view logic is handled inside LeagueCreator, but we could navigate back here
   };
 
   const handleScoreSubmit = async (entryOrEntries) => {
@@ -129,7 +138,28 @@ const App = () => {
                     </div>
                   </button>
                 ))}
+
+                {/* Create New League Button */}
+                <button
+                  onClick={() => setView('create-league')}
+                  className="group relative p-6 bg-blue-600/5 border-2 border-dashed border-blue-500/30 hover:border-blue-500/50 hover:bg-blue-600/10 rounded-2xl text-left transition-all flex flex-col items-center justify-center gap-4"
+                >
+                  <div className="p-4 bg-blue-500/10 text-blue-400 rounded-2xl group-hover:scale-110 transition-transform">
+                    <Plus size={32} strokeWidth={3} />
+                  </div>
+                  <div className="text-center">
+                    <h3 className="text-lg font-black text-blue-400 tracking-tight italic">New League</h3>
+                    <p className="text-[10px] text-blue-500/60 font-black uppercase tracking-widest">Start a competition</p>
+                  </div>
+                </button>
               </div>
+            </section>
+          ) : view === 'create-league' ? (
+            <section className="animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-2xl mx-auto">
+               <LeagueCreator 
+                 onCreated={handleLeagueCreated} 
+                 onCancel={() => setView('dashboard')} 
+               />
             </section>
           ) : (
             <section className="animate-in fade-in slide-in-from-bottom-4 duration-700">
