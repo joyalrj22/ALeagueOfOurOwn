@@ -23,7 +23,7 @@ exports.handler = async (event, context) => {
 
     // Mock Authentication: Assume user-1 is the creator
     const adminId = "user-1";
-    const league = leagueCreatorService.createLeague(name, scoringConfig, adminId);
+    const league = await leagueCreatorService.createLeague(name, scoringConfig, adminId);
 
     return {
       statusCode: 201,

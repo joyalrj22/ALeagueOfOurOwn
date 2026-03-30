@@ -1,8 +1,8 @@
 const db = require("./db");
 
 const leagueRepository = {
-  getLeagueById: (id) => {
-    const row = db.prepare("SELECT * FROM leagues WHERE id = ?").get(id);
+  getLeagueById: async (id) => {
+    const row = await db.get("SELECT * FROM leagues WHERE id = ?", [id]);
     if (!row) return null;
     return {
       id: row.id,
@@ -13,20 +13,22 @@ const leagueRepository = {
     };
   },
 
-  getEntriesByLeagueId: (leagueId) => {
-    return db.prepare("SELECT * FROM entries WHERE league_id = ?").all(leagueId).map(row => ({
+  getEntriesByLeagueId: async (leagueId) => {
+    const rows = await db.query("SELECT * FROM entries WHERE league_id = ?", [leagueId]);
+    return rows.map(row => ({
       id: row.id,
       leagueId: row.league_id,
       userId: row.user_id,
       result: row.result,
       opponentId: row.opponent_id,
-      rank: row.rank,
+      rank: row.rank_val, // Use the universal rank_val
       timestamp: row.timestamp
     }));
   },
 
-  getMembersByLeagueId: (leagueId) => {
-    return db.prepare("SELECT * FROM members WHERE league_id = ?").all(leagueId).map(row => ({
+  getMembersByLeagueId: async (leagueId) => {
+    const rows = await db.query("SELECT * FROM members WHERE league_id = ?", [leagueId]);
+    return rows.map(row => ({
       userId: row.user_id,
       leagueId: row.league_id,
       role: row.role,
@@ -34,14 +36,14 @@ const leagueRepository = {
     }));
   },
 
-  addEntry: (entry) => {
-    const id = `e${Date.now()}`; // More reliable ID generation than array length
+  addEntry: async (entry) => {
+    const id = `e${Date.now()}`;
     const timestamp = new Date().toISOString();
     
-    db.prepare(`
-      INSERT INTO entries (id, league_id, user_id, result, opponent_id, rank, timestamp)
+    await db.query(`
+      INSERT INTO entries (id, league_id, user_id, result, opponent_id, rank_val, timestamp)
       VALUES (?, ?, ?, ?, ?, ?, ?)
-    `).run(
+    `, [
       id,
       entry.leagueId,
       entry.userId,
@@ -49,13 +51,13 @@ const leagueRepository = {
       entry.opponentId || null,
       entry.rank || null,
       timestamp
-    );
+    ]);
 
     return { id, ...entry, timestamp };
   },
 
-  getUserById: (userId) => {
-    const row = db.prepare("SELECT * FROM members WHERE user_id = ? LIMIT 1").get(userId);
+  getUserById: async (userId) => {
+    const row = await db.get("SELECT * FROM members WHERE user_id = ? LIMIT 1", [userId]);
     if (!row) return null;
     return {
       userId: row.user_id,
@@ -65,32 +67,32 @@ const leagueRepository = {
     };
   },
 
-  createLeague: (leagueData) => {
+  createLeague: async (leagueData) => {
     const id = `league-${Date.now()}`;
-    db.prepare(`
+    await db.query(`
       INSERT INTO leagues (id, name, invite_code, admin_id, scoring_config)
       VALUES (?, ?, ?, ?, ?)
-    `).run(
+    `, [
       id,
       leagueData.name,
       leagueData.inviteCode,
       leagueData.adminId,
       JSON.stringify(leagueData.scoringConfig)
-    );
+    ]);
 
     return { id, ...leagueData };
   },
 
-  addMember: (memberData) => {
-    db.prepare(`
+  addMember: async (memberData) => {
+    await db.query(`
       INSERT INTO members (user_id, league_id, role, name)
       VALUES (?, ?, ?, ?)
-    `).run(
+    `, [
       memberData.userId,
       memberData.leagueId,
       memberData.role,
       memberData.name
-    );
+    ]);
 
     return memberData;
   },

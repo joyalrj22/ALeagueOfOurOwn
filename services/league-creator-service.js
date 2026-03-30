@@ -8,7 +8,7 @@ const leagueCreatorService = {
    * @param {string} adminId - ID of the creator
    * @returns {object} The created league
    */
-  createLeague: (name, scoringConfig, adminId) => {
+  createLeague: async (name, scoringConfig, adminId) => {
     if (!name || !scoringConfig) {
       throw new Error("Missing league name or scoring configuration.");
     }
@@ -25,7 +25,7 @@ const leagueCreatorService = {
 
     const inviteCode = generateInviteCode();
 
-    const league = leagueRepository.createLeague({
+    const league = await leagueRepository.createLeague({
       name,
       inviteCode,
       adminId,
@@ -33,7 +33,7 @@ const leagueCreatorService = {
     });
 
     // Add creator as the first member and ADMIN
-    leagueRepository.addMember({
+    await leagueRepository.addMember({
       userId: adminId,
       leagueId: league.id,
       role: "admin",
