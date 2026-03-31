@@ -37,3 +37,10 @@ Thumbs.db
 # Logs
 *.log
 
+ui/dist/**
+
+# Database and secrets
+*.db
+.env
+.netlify/functions/*.node
+
