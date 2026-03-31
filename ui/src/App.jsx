@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Layout, LayoutDashboard, Settings, Trophy, LogOut, ChevronRight, Sparkles } from 'lucide-react';
+import { Layout, LayoutDashboard, Settings, Trophy, LogOut, ChevronRight, Sparkles, Plus } from 'lucide-react';
 import Leaderboard from './components/Leaderboard';
 import AdminScoreEntry from './components/AdminScoreEntry';
 import LeagueCreator from './components/LeagueCreator';

@@ -43,4 +43,3 @@ ui/dist/**
 *.db
 .env
 .netlify/functions/*.node
-
