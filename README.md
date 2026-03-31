@@ -2,6 +2,8 @@
 
 A multi-tenant league management platform that supports any competition type—from sports and eSports to casual gaming.
 
+**Production:** [gilded-piroshki-2bd9dc.netlify.app](https://gilded-piroshki-2bd9dc.netlify.app/)  
+**Staging:** [staging--gilded-piroshki-2bd9dc.netlify.app](https://staging--gilded-piroshki-2bd9dc.netlify.app/)
 ## 🚀 Overview
 
 **A League of Our Own** is a full-stack application that enables users to create and manage custom leagues. Administrators have full control over scoring rules, roster management, and scheduling, while participants can track their progress through real-time standings and dynamic analytics.

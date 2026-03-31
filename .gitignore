@@ -39,3 +39,7 @@ Thumbs.db
 
 ui/dist/**
 
+# Database and secrets
+*.db
+.env
+.netlify/functions/*.node

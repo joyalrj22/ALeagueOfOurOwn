@@ -15,8 +15,8 @@ exports.handler = async (event, context) => {
       const tableIndex = parts.indexOf("table");
       const leagueId = parts[tableIndex - 1];
       
-      const league = leagueRepository.getLeagueById(leagueId);
-      const table = leagueService.calculateTable(leagueId);
+      const league = await leagueRepository.getLeagueById(leagueId);
+      const table = await leagueService.calculateTable(leagueId);
       
       return {
         statusCode: 200,
@@ -28,7 +28,7 @@ exports.handler = async (event, context) => {
       const data = JSON.parse(body);
       const { leagueId, entry } = data;
       
-      const newEntry = leagueService.submitScore(leagueId, entry);
+      const newEntry = await leagueService.submitScore(leagueId, entry);
       
       return {
         statusCode: 201,
