@@ -28,7 +28,7 @@ const App = () => {
       if (!res.ok) throw new Error("Failed to fetch league data");
       const data = await res.json();
       setLeagueData(data);
-      
+
       // Fetch members (In a real app, this might be a separate call or part of the above)
       // For MVP, we'll derive them from the table which has user info
       setMembers(data.table.map(row => ({ userId: row.userId, name: row.userName })));
@@ -59,10 +59,10 @@ const App = () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ leagueId: selectedLeagueId, entry })
         });
-        
+
         if (!res.ok) throw new Error("Failed to submit score");
       }
-      
+
       // Refresh the table (Optimistic UI would be better, but refresh is simpler for initial MVP)
       fetchLeagueTable(selectedLeagueId);
     } catch (err) {
@@ -77,9 +77,9 @@ const App = () => {
         <div className="p-3 bg-blue-600 rounded-2xl shadow-[0_0_20px_rgba(37,99,235,0.4)] mb-12">
           <Sparkles className="text-white" size={24} />
         </div>
-        
+
         <div className="flex flex-col gap-8">
-          <button 
+          <button
             onClick={() => setView('dashboard')}
             className={`p-3 rounded-xl transition-all ${view === 'dashboard' ? 'bg-slate-800 text-blue-400' : 'text-slate-500 hover:text-slate-200'}`}
           >
@@ -127,14 +127,14 @@ const App = () => {
                     </div>
                     <h3 className="text-xl font-bold mb-1 text-slate-100 group-hover:text-blue-400 transition-colors">{league.name}</h3>
                     <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">{league.type} scoring enabled</p>
-                    
+
                     <div className="mt-6 flex items-center gap-2">
-                        <div className="flex -space-x-2">
-                            {[1, 2, 3].map(i => (
-                                <div key={i} className="w-8 h-8 rounded-full border-2 border-slate-900 bg-slate-800 flex items-center justify-center text-[10px] font-bold">U{i}</div>
-                            ))}
-                        </div>
-                        <span className="text-xs text-slate-500 font-medium">+12 members</span>
+                      <div className="flex -space-x-2">
+                        {[1, 2, 3].map(i => (
+                          <div key={i} className="w-8 h-8 rounded-full border-2 border-slate-900 bg-slate-800 flex items-center justify-center text-[10px] font-bold">U{i}</div>
+                        ))}
+                      </div>
+                      <span className="text-xs text-slate-500 font-medium">+12 members</span>
                     </div>
                   </button>
                 ))}
@@ -156,14 +156,14 @@ const App = () => {
             </section>
           ) : view === 'create-league' ? (
             <section className="animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-2xl mx-auto">
-               <LeagueCreator 
-                 onCreated={handleLeagueCreated} 
-                 onCancel={() => setView('dashboard')} 
-               />
+              <LeagueCreator
+                onCreated={handleLeagueCreated}
+                onCancel={() => setView('dashboard')}
+              />
             </section>
           ) : (
             <section className="animate-in fade-in slide-in-from-bottom-4 duration-700">
-              <button 
+              <button
                 onClick={() => setView('dashboard')}
                 className="flex items-center gap-2 text-slate-500 hover:text-blue-400 transition-colors mb-8 font-bold text-sm tracking-wide uppercase"
               >
@@ -173,16 +173,16 @@ const App = () => {
 
               <header className="mb-12">
                 <div className="flex items-center gap-4 mb-4">
-                    <span className="px-3 py-1 bg-blue-500/10 text-blue-400 text-[10px] font-black tracking-widest uppercase border border-blue-500/20 rounded-full">ACTIVE LEAGUE</span>
-                    {loading && <span className="text-xs text-blue-400 animate-pulse">Syncing data...</span>}
+                  <span className="px-3 py-1 bg-blue-500/10 text-blue-400 text-[10px] font-black tracking-widest uppercase border border-blue-500/20 rounded-full">ACTIVE LEAGUE</span>
+                  {loading && <span className="text-xs text-blue-400 animate-pulse">Syncing data...</span>}
                 </div>
                 <h1 className="text-4xl font-black tracking-tighter mb-2 text-white">
                   {leagueData?.league?.name || "Loading League..."}
                 </h1>
                 <div className="flex items-center gap-4 text-slate-500 text-sm font-medium">
-                    <div className="flex items-center gap-1.5"><Trophy size={14} /> {leagueData?.league?.scoringConfig?.type} Engine</div>
-                    <div className="w-1 h-1 bg-slate-700 rounded-full"></div>
-                    <div>Invite Code: <span className="text-slate-300 font-mono">{leagueData?.league?.inviteCode}</span></div>
+                  <div className="flex items-center gap-1.5"><Trophy size={14} /> {leagueData?.league?.scoringConfig?.type} Engine</div>
+                  <div className="w-1 h-1 bg-slate-700 rounded-full"></div>
+                  <div>Invite Code: <span className="text-slate-300 font-mono">{leagueData?.league?.inviteCode}</span></div>
                 </div>
               </header>
 
@@ -191,32 +191,32 @@ const App = () => {
                   {leagueData && <Leaderboard league={leagueData.league} table={leagueData.table} />}
                 </div>
                 <div>
-                  <AdminScoreEntry 
-                    league={leagueData?.league} 
-                    members={members} 
-                    onSubmit={handleScoreSubmit} 
+                  <AdminScoreEntry
+                    league={leagueData?.league}
+                    members={members}
+                    onSubmit={handleScoreSubmit}
                   />
-                  
+
                   <div className="mt-8 p-6 bg-slate-900/30 border border-slate-800 rounded-xl">
-                      <h4 className="font-bold mb-4 flex items-center gap-2 text-slate-300">
-                          <Settings size={16} /> League Config
-                      </h4>
-                      <div className="space-y-3 text-sm">
-                          {leagueData?.league?.scoringConfig?.type === 'match' ? (
-                              <>
-                                  <div className="flex justify-between font-medium"><span className="text-slate-500">Win Points</span> <span className="text-green-400">+{leagueData?.league?.scoringConfig?.pointsPerWin}</span></div>
-                                  <div className="flex justify-between font-medium"><span className="text-slate-500">Draw Points</span> <span className="text-slate-300">+{leagueData?.league?.scoringConfig?.pointsPerDraw}</span></div>
-                                  <div className="flex justify-between font-medium"><span className="text-slate-500">Loss Points</span> <span className="text-red-400">{leagueData?.league?.scoringConfig?.pointsPerLoss}</span></div>
-                              </>
-                          ) : (
-                              Object.entries(leagueData?.league?.scoringConfig?.rankPoints || {}).map(([rank, pts]) => (
-                                  <div key={rank} className="flex justify-between font-medium">
-                                      <span className="text-slate-500">{rank === '1' ? '1st' : rank === '2' ? '2nd' : rank === '3' ? '3rd' : rank+'th'} Place</span> 
-                                      <span className="text-blue-400">+{pts}</span>
-                                  </div>
-                              ))
-                          )}
-                      </div>
+                    <h4 className="font-bold mb-4 flex items-center gap-2 text-slate-300">
+                      <Settings size={16} /> League Config
+                    </h4>
+                    <div className="space-y-3 text-sm">
+                      {leagueData?.league?.scoringConfig?.type === 'match' ? (
+                        <>
+                          <div className="flex justify-between font-medium"><span className="text-slate-500">Win Points</span> <span className="text-green-400">+{leagueData?.league?.scoringConfig?.pointsPerWin}</span></div>
+                          <div className="flex justify-between font-medium"><span className="text-slate-500">Draw Points</span> <span className="text-slate-300">+{leagueData?.league?.scoringConfig?.pointsPerDraw}</span></div>
+                          <div className="flex justify-between font-medium"><span className="text-slate-500">Loss Points</span> <span className="text-red-400">{leagueData?.league?.scoringConfig?.pointsPerLoss}</span></div>
+                        </>
+                      ) : (
+                        Object.entries(leagueData?.league?.scoringConfig?.rankPoints || {}).map(([rank, pts]) => (
+                          <div key={rank} className="flex justify-between font-medium">
+                            <span className="text-slate-500">{rank === '1' ? '1st' : rank === '2' ? '2nd' : rank === '3' ? '3rd' : rank + 'th'} Place</span>
+                            <span className="text-blue-400">+{pts}</span>
+                          </div>
+                        ))
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>

@@ -1,57 +1,52 @@
-const path = require('path');
+const mysql = require('mysql2/promise');
 
-let db;
-let dbType = 'sqlite';
+let pool;
 
 /**
- * Initialize the database connection based on environment.
+ * Initialize the connection pool specifically for TiDB Cloud / MySQL.
+ * SSL is enabled by default to satisfy TiDB Cloud requirements.
  */
-function initDB() {
-  if (process.env.DATABASE_URL) {
-    // Remote MySQL Connection
-    const mysql = require('mysql2/promise');
-    dbType = 'mysql';
-    // The db object will be a pool for better performance in serverless
-    db = mysql.createPool(process.env.DATABASE_URL);
-    console.log("Database: Initialized Remote MySQL connection pool.");
-  } else if (process.env.NETLIFY || process.env.NODE_ENV === 'production') {
-    // Staging fallback to In-Memory SQLite to avoid read-only errors
-    const Database = require('better-sqlite3');
-    dbType = 'sqlite-memory';
-    db = new Database(':memory:');
-    console.log("Database: Falling back to In-Memory SQLite for Serverless environment.");
-  } else {
-    // Local SQLite File
-    const Database = require('better-sqlite3');
-    const dbPath = path.join(__dirname, '../league.db');
-    dbType = 'sqlite';
-    db = new Database(dbPath);
-    console.log(`Database: Connected to local SQLite file at ${dbPath}`);
+function initPool() {
+  if (!process.env.DATABASE_URL) {
+    console.warn("Database: DATABASE_URL is not defined. Connection will fail.");
+    return;
   }
+
+  pool = mysql.createPool({
+    uri: process.env.DATABASE_URL,
+    ssl: {
+      minVersion: 'TLSv1.2',
+      rejectUnauthorized: true, // TiDB Cloud requires this for security
+    },
+    waitForConnections: true,
+    connectionLimit: 10,
+    maxIdle: 10, // Max idle connections, the pool will resize
+    idleTimeout: 60000, // Idle connections timeout in milliseconds
+    queueLimit: 0,
+    enableKeepAlive: true,
+    keepAliveInitialDelay: 0
+  });
+
+  console.log("Database: Initialized TiDB Cloud/MySQL connection pool with SSL.");
 }
 
 /**
- * Universal query runner to handle differences between better-sqlite3 and mysql2.
+ * Universal query runner for MySQL/TiDB.
  */
 async function query(sql, params = []) {
-  if (!db) initDB();
+  if (!pool) initPool();
 
-  if (dbType === 'mysql') {
-    const [rows] = await db.execute(sql, params);
+  try {
+    const [rows] = await pool.execute(sql, params);
     return rows;
-  } else {
-    // SQLite (File or Memory)
-    const stmt = db.prepare(sql);
-    if (sql.trim().toUpperCase().startsWith('SELECT')) {
-      return stmt.all(params);
-    } else {
-      return stmt.run(params);
-    }
+  } catch (err) {
+    console.error("Database Query Error:", err.message);
+    throw err;
   }
 }
 
 /**
- * Get a single row.
+ * Get a single row from the database.
  */
 async function get(sql, params = []) {
   const rows = await query(sql, params);
@@ -59,45 +54,51 @@ async function get(sql, params = []) {
 }
 
 /**
- * Initialize the schema (Universal syntax for SQLite and MySQL).
+ * Ensure the base schema exists.
+ * Note: In production, it's better to use migrations, but for MVP we auto-init.
  */
 async function setupDatabase() {
   const schema = [
     `CREATE TABLE IF NOT EXISTS leagues (
       id VARCHAR(255) PRIMARY KEY,
       name VARCHAR(255) NOT NULL,
-      invite_code VARCHAR(255) UNIQUE NOT NULL,
+      invite_code VARCHAR(10) UNIQUE NOT NULL,
       admin_id VARCHAR(255) NOT NULL,
       scoring_config TEXT NOT NULL
-    )`,
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
     `CREATE TABLE IF NOT EXISTS members (
       user_id VARCHAR(255) NOT NULL,
       league_id VARCHAR(255) NOT NULL,
       role VARCHAR(50) DEFAULT 'member',
       name VARCHAR(255),
       PRIMARY KEY (user_id, league_id)
-    )`,
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
     `CREATE TABLE IF NOT EXISTS entries (
       id VARCHAR(255) PRIMARY KEY,
       league_id VARCHAR(255) NOT NULL,
       user_id VARCHAR(255) NOT NULL,
       result VARCHAR(50),
       opponent_id VARCHAR(255),
-      rank_val INT, -- renamed from 'rank' to avoid reserved keyword issues in some dialects
+      rank_val INT,
       timestamp VARCHAR(100) NOT NULL
-    )`
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
   ];
+
+  if (!pool) initPool();
+  if (!pool) return; // Skip if no connection string
 
   for (const sql of schema) {
     await query(sql);
   }
 }
 
-// Initial setup
-setupDatabase().catch(err => console.error("Database Setup Error:", err));
+// Auto-run schema setup if we have a connection
+if (process.env.DATABASE_URL) {
+  setupDatabase().catch(err => console.error("Database Initialization failed:", err));
+}
 
 module.exports = {
   query,
   get,
-  dbType // Export type for dialect-specific logic if needed
+  dbType: 'mysql'
 };
