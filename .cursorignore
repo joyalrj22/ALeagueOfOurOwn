@@ -1,0 +1,12 @@
+# Layer-2 key hygiene — keep secret-bearing files out of the coding agent's
+# reach so indirect prompt injection can't grep a live credential from the
+# working tree. See SECURITY.md and .claude/settings.json (permissions.deny).
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa
+*serviceaccount*.json

@@ -29,7 +29,20 @@ jobs:
         working-directory: ui
         run: npm install
 
+      - name: Lint UI
+        working-directory: ui
+        run: npm run lint
+
       - name: Run UI build (Netlify equivalent)
         working-directory: ui
         run: npm run build
 
+  security-scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Fetch-and-exec / reverse-shell pattern scan
+        run: scripts/ci/check-shell-patterns.sh

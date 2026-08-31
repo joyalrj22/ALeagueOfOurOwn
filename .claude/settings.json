@@ -1,0 +1,48 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__Linear__list_issues",
+      "mcp__Linear__get_issue",
+      "mcp__Linear__save_issue",
+      "mcp__Linear__list_comments",
+      "mcp__Linear__save_comment",
+      "mcp__Linear__list_issue_statuses",
+      "mcp__Linear__list_issue_labels",
+      "mcp__Linear__create_issue_label",
+      "mcp__Linear__list_teams",
+      "mcp__Linear__get_team",
+      "mcp__Linear__list_users",
+      "mcp__Linear__get_user",
+      "mcp__Linear__list_projects",
+      "mcp__Linear__get_project",
+      "mcp__Linear__list_cycles",
+      "mcp__Linear__get_document",
+      "mcp__Linear__list_documents"
+    ],
+    "deny": [
+      "Read(.env)",
+      "Read(**/.env)",
+      "Read(**/.env.local)",
+      "Read(**/.env.*.local)",
+      "Read(**/*.pem)",
+      "Read(**/*.key)",
+      "Read(**/*.p12)",
+      "Read(**/*.pfx)",
+      "Read(**/id_rsa)",
+      "Read(**/*serviceaccount*.json)"
+    ]
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/conductor-loop.sh",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}

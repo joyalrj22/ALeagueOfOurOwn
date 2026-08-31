@@ -4,7 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "webpack serve --config webpack.config.cjs --mode development",
-    "build": "webpack --config webpack.config.cjs --mode production"
+    "build": "webpack --config webpack.config.cjs --mode production",
+    "lint": "eslint \"src/**/*.{js,jsx}\"",
+    "lint:fix": "eslint \"src/**/*.{js,jsx}\" --fix",
+    "format": "prettier --write \"src/**/*.{js,jsx,css}\""
   },
   "dependencies": {
     "react": "^18.2.0",
@@ -27,6 +30,10 @@
     "style-loader": "^4.0.0",
     "webpack": "^5.96.1",
     "webpack-cli": "^5.1.4",
-    "webpack-dev-server": "^5.0.4"
+    "webpack-dev-server": "^5.0.4",
+    "eslint": "^8.57.0",
+    "eslint-plugin-react": "^7.34.1",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "prettier": "^3.3.0"
   }
 }

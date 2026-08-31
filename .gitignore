@@ -39,3 +39,6 @@ Thumbs.db
 
 ui/dist/**
 
+
+# Conductor — per-run sentinel, never committed
+conductor/.loop-state.json
