@@ -38,7 +38,7 @@ const leagueRepository = {
 
   addEntry: async (entry) => {
     const id = `e${Date.now()}`;
-    const timestamp = new Date().toISOString();
+    const timestamp = entry.timestamp || new Date().toISOString();
     
     await db.query(`
       INSERT INTO entries (id, league_id, user_id, result, opponent_id, rank_val, timestamp)

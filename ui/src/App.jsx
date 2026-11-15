@@ -3,6 +3,90 @@ import { Layout, LayoutDashboard, Settings, Trophy, LogOut, ChevronRight, Sparkl
 import Leaderboard from './components/Leaderboard';
 import AdminScoreEntry from './components/AdminScoreEntry';
 import LeagueCreator from './components/LeagueCreator';
+import mockData from '../../repositories/mockData';
+
+const buildTableFromMock = (leagueId) => {
+  const league = mockData.leagues.find((l) => l.id === leagueId);
+  if (!league) return null;
+
+  const entries = mockData.entries.filter((e) => e.leagueId === leagueId);
+  const leagueMembers = mockData.members.filter((m) => m.leagueId === leagueId);
+  const { scoringConfig } = league;
+
+  const userStats = {};
+  leagueMembers.forEach((member) => {
+    userStats[member.userId] = {
+      userId: member.userId,
+      userName: member.name,
+      points: 0,
+      played: 0,
+      wins: 0,
+      losses: 0,
+      draws: 0,
+      rankPoints: 0,
+    };
+  });
+
+  if (scoringConfig.type === 'match') {
+    entries.forEach((entry) => {
+      const stats = userStats[entry.userId];
+      if (!stats) return;
+      stats.played += 1;
+      if (entry.result === 'win') {
+        stats.wins += 1;
+        stats.points += scoringConfig.pointsPerWin ?? 3;
+      } else if (entry.result === 'loss') {
+        stats.losses += 1;
+        stats.points += scoringConfig.pointsPerLoss ?? 0;
+      } else if (entry.result === 'draw') {
+        stats.draws += 1;
+        stats.points += scoringConfig.pointsPerDraw ?? 1;
+      }
+    });
+  } else if (scoringConfig.type === 'rank') {
+    entries.forEach((entry) => {
+      const stats = userStats[entry.userId];
+      if (!stats) return;
+      stats.played += 1;
+      const reward = scoringConfig.rankPoints[entry.rank] || 0;
+      stats.points += reward;
+    });
+  }
+
+  const table = Object.values(userStats).sort((a, b) => b.points - a.points);
+  table.forEach((row, index) => {
+    row.rank = index + 1;
+  });
+
+  return { league, table, entries };
+};
+
+const buildMatchHistory = (entries = [], members = []) => {
+  const memberName = (id) => members.find((m) => m.userId === id)?.name || id;
+  const matches = [];
+  for (let i = 0; i < entries.length; i += 2) {
+    const a = entries[i];
+    const b = entries[i + 1];
+    if (!a) continue;
+    if (b && a.opponentId === b.userId) {
+      matches.push({
+        id: a.id,
+        timestamp: a.timestamp,
+        p1: { name: memberName(a.userId), result: a.result, faction: a.faction },
+        p2: { name: memberName(b.userId), result: b.result, faction: b.faction },
+      });
+    } else {
+      matches.push({
+        id: a.id,
+        timestamp: a.timestamp,
+        p1: { name: memberName(a.userId), result: a.result, faction: a.faction },
+        p2: a.opponentId ? { name: memberName(a.opponentId), result: a.result === 'win' ? 'loss' : a.result === 'loss' ? 'win' : 'draw' } : null,
+      });
+      if (b) i -= 1;
+    }
+  }
+  return matches.reverse();
+};
 
 const App = () => {
   const [view, setView] = useState('dashboard'); // 'dashboard' or 'league'
@@ -12,28 +96,34 @@ const App = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Mock "My Leagues" for the dashboard - initialized with some data
-  const [myLeagues, setMyLeagues] = useState([
-    { id: 'league-1', name: 'Global FIFA Tournament', type: 'match' },
-    { id: 'league-2', name: 'Office Chess League', type: 'rank' }
-  ]);
-
-  // We should ideally fetch these from /api/league-handler/leagues (to be implemented)
-  // For now, we'll just handle the local refresh after creation.
+  // Initialize dashboard leagues from mockData, allowing newly created leagues to be appended
+  const [myLeagues, setMyLeagues] = useState(() =>
+    mockData.leagues.map((l) => ({
+      id: l.id,
+      name: l.name,
+      type: l.scoringConfig.type,
+      members: mockData.members.filter((m) => m.leagueId === l.id),
+    }))
+  );
 
   const fetchLeagueTable = async (leagueId) => {
     setLoading(true);
+    setError(null);
     try {
       const res = await fetch(`/.netlify/functions/league-handler/league/${leagueId}/table`);
       if (!res.ok) throw new Error("Failed to fetch league data");
       const data = await res.json();
       setLeagueData(data);
-
-      // Fetch members (In a real app, this might be a separate call or part of the above)
-      // For MVP, we'll derive them from the table which has user info
       setMembers(data.table.map(row => ({ userId: row.userId, name: row.userName })));
     } catch (err) {
-      setError(err.message);
+      // Fall back to hardcoded mock database if backend/DB is unavailable
+      const fallbackData = buildTableFromMock(leagueId);
+      if (fallbackData) {
+        setLeagueData(fallbackData);
+        setMembers(fallbackData.table.map(row => ({ userId: row.userId, name: row.userName })));
+      } else {
+        setError(err.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -46,13 +136,13 @@ const App = () => {
   };
 
   const handleLeagueCreated = (newLeague) => {
-    setMyLeagues([...myLeagues, { id: newLeague.id, name: newLeague.name, type: newLeague.scoringConfig.type }]);
+    setMyLeagues([...myLeagues, { id: newLeague.id, name: newLeague.name, type: newLeague.scoringConfig.type, members: [] }]);
     // Success view logic is handled inside LeagueCreator, but we could navigate back here
   };
 
   const handleScoreSubmit = async (entryOrEntries) => {
+    const entries = Array.isArray(entryOrEntries) ? entryOrEntries : [entryOrEntries];
     try {
-      const entries = Array.isArray(entryOrEntries) ? entryOrEntries : [entryOrEntries];
       for (const entry of entries) {
         const res = await fetch(`/.netlify/functions/league-handler/score`, {
           method: 'POST',
@@ -66,7 +156,19 @@ const App = () => {
       // Refresh the table (Optimistic UI would be better, but refresh is simpler for initial MVP)
       fetchLeagueTable(selectedLeagueId);
     } catch (err) {
-      alert("Error submitting score: " + err.message);
+      // Fall back to updating hardcoded in-memory mockData so UI testing still works without a DB server
+      entries.forEach((entry) => {
+        mockData.entries.push({
+          id: `e${mockData.entries.length + 1}`,
+          leagueId: selectedLeagueId,
+          timestamp: entry.timestamp || new Date().toISOString(),
+          ...entry,
+        });
+      });
+      const fallbackData = buildTableFromMock(selectedLeagueId);
+      if (fallbackData) {
+        setLeagueData(fallbackData);
+      }
     }
   };
 
@@ -129,12 +231,14 @@ const App = () => {
                     <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">{league.type} scoring enabled</p>
 
                     <div className="mt-6 flex items-center gap-2">
-                      <div className="flex -space-x-2">
-                        {[1, 2, 3].map(i => (
-                          <div key={i} className="w-8 h-8 rounded-full border-2 border-slate-900 bg-slate-800 flex items-center justify-center text-[10px] font-bold">U{i}</div>
-                        ))}
-                      </div>
-                      <span className="text-xs text-slate-500 font-medium">+12 members</span>
+                        <div className="flex -space-x-2">
+                            {(league.members || []).slice(0, 3).map((m) => (
+                                <div key={m.userId} title={m.name} className="w-8 h-8 rounded-full border-2 border-slate-900 bg-slate-800 flex items-center justify-center text-[10px] font-bold">
+                                  {m.name.slice(0, 2).toUpperCase()}
+                                </div>
+                            ))}
+                        </div>
+                        <span className="text-xs text-slate-500 font-medium">{(league.members || []).length} members</span>
                     </div>
                   </button>
                 ))}
@@ -187,8 +291,83 @@ const App = () => {
               </header>
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2">
+                <div className="lg:col-span-2 space-y-8">
                   {leagueData && <Leaderboard league={leagueData.league} table={leagueData.table} />}
+
+                  {leagueData?.league?.scoringConfig?.type === 'match' && leagueData?.entries?.length > 0 && (
+                    <div className="bg-slate-900/50 rounded-xl border border-slate-700/50 overflow-hidden backdrop-blur-sm">
+                      <div className="p-4 border-b border-slate-700/50 flex flex-wrap items-center justify-between gap-2">
+                        <h3 className="font-bold text-slate-200">Match History</h3>
+                        {leagueData?.league?.scoringConfig?.factions && (
+                          <div className="flex items-center gap-3 text-xs font-bold">
+                            {leagueData.league.scoringConfig.factions.map((faction) => {
+                              const wins = leagueData.entries.filter(
+                                (e) => e.faction === faction && e.result === 'win'
+                              ).length;
+                              return (
+                                <span
+                                  key={faction}
+                                  className={`px-2.5 py-1 rounded-full border ${
+                                    faction === 'USSR'
+                                      ? 'bg-red-500/15 border-red-500/30 text-red-400'
+                                      : 'bg-blue-500/15 border-blue-500/30 text-blue-400'
+                                  }`}
+                                >
+                                  {faction}: {wins} {wins === 1 ? 'win' : 'wins'}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                      <div className="divide-y divide-slate-800/50">
+                        {buildMatchHistory(leagueData.entries, members).map((match) => (
+                          <div key={match.id} className="px-5 py-3.5 flex items-center justify-between text-sm">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className={match.p1.result === 'win' ? 'font-bold text-green-400' : 'text-slate-300'}>
+                                {match.p1.name}
+                              </span>
+                              {match.p1.faction && (
+                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                                  match.p1.faction === 'USSR' ? 'bg-red-500/15 text-red-400' : 'bg-blue-500/15 text-blue-400'
+                                }`}>
+                                  {match.p1.faction}
+                                </span>
+                              )}
+                              <span className="text-slate-600 text-xs uppercase font-bold">vs</span>
+                              <span className={match.p2?.result === 'win' ? 'font-bold text-green-400' : 'text-slate-300'}>
+                                {match.p2?.name}
+                              </span>
+                              {match.p2?.faction && (
+                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                                  match.p2.faction === 'USSR' ? 'bg-red-500/15 text-red-400' : 'bg-blue-500/15 text-blue-400'
+                                }`}>
+                                  {match.p2.faction}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex flex-col items-end gap-0.5">
+                              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                                {match.p1.result === 'draw'
+                                  ? 'Draw'
+                                  : `${match.p1.result === 'win' ? match.p1.name : match.p2?.name} Won`}
+                              </span>
+                              {match.timestamp && (
+                                <span className="text-[11px] text-slate-500">
+                                  {new Date(match.timestamp).toLocaleDateString('en-GB', {
+                                    weekday: 'short',
+                                    day: 'numeric',
+                                    month: 'short',
+                                    year: 'numeric',
+                                  })}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div>
                   <AdminScoreEntry
@@ -198,25 +377,30 @@ const App = () => {
                   />
 
                   <div className="mt-8 p-6 bg-slate-900/30 border border-slate-800 rounded-xl">
-                    <h4 className="font-bold mb-4 flex items-center gap-2 text-slate-300">
-                      <Settings size={16} /> League Config
-                    </h4>
-                    <div className="space-y-3 text-sm">
-                      {leagueData?.league?.scoringConfig?.type === 'match' ? (
-                        <>
-                          <div className="flex justify-between font-medium"><span className="text-slate-500">Win Points</span> <span className="text-green-400">+{leagueData?.league?.scoringConfig?.pointsPerWin}</span></div>
-                          <div className="flex justify-between font-medium"><span className="text-slate-500">Draw Points</span> <span className="text-slate-300">+{leagueData?.league?.scoringConfig?.pointsPerDraw}</span></div>
-                          <div className="flex justify-between font-medium"><span className="text-slate-500">Loss Points</span> <span className="text-red-400">{leagueData?.league?.scoringConfig?.pointsPerLoss}</span></div>
-                        </>
-                      ) : (
-                        Object.entries(leagueData?.league?.scoringConfig?.rankPoints || {}).map(([rank, pts]) => (
-                          <div key={rank} className="flex justify-between font-medium">
-                            <span className="text-slate-500">{rank === '1' ? '1st' : rank === '2' ? '2nd' : rank === '3' ? '3rd' : rank + 'th'} Place</span>
-                            <span className="text-blue-400">+{pts}</span>
-                          </div>
-                        ))
-                      )}
-                    </div>
+                      <h4 className="font-bold mb-4 flex items-center gap-2 text-slate-300">
+                          <Settings size={16} /> League Config
+                      </h4>
+                      <div className="space-y-3 text-sm">
+                          {leagueData?.league?.scoringConfig?.type === 'match' ? (
+                              <>
+                                  <div className="flex justify-between font-medium"><span className="text-slate-500">Win Points</span> <span className="text-green-400">+{leagueData?.league?.scoringConfig?.pointsPerWin}</span></div>
+                                  {leagueData?.league?.scoringConfig?.allowDraws !== false && leagueData?.league?.scoringConfig?.pointsPerDraw != null && (
+                                    <div className="flex justify-between font-medium"><span className="text-slate-500">Draw Points</span> <span className="text-slate-300">+{leagueData?.league?.scoringConfig?.pointsPerDraw}</span></div>
+                                  )}
+                                  <div className="flex justify-between font-medium"><span className="text-slate-500">Loss Points</span> <span className="text-red-400">{leagueData?.league?.scoringConfig?.pointsPerLoss}</span></div>
+                                  {leagueData?.league?.scoringConfig?.factions && (
+                                    <div className="flex justify-between font-medium"><span className="text-slate-500">Factions</span> <span className="text-slate-300">{leagueData.league.scoringConfig.factions.join(' vs ')}</span></div>
+                                  )}
+                              </>
+                          ) : (
+                              Object.entries(leagueData?.league?.scoringConfig?.rankPoints || {}).map(([rank, pts]) => (
+                                  <div key={rank} className="flex justify-between font-medium">
+                                      <span className="text-slate-500">{rank === '1' ? '1st' : rank === '2' ? '2nd' : rank === '3' ? '3rd' : rank+'th'} Place</span> 
+                                      <span className="text-blue-400">+{pts}</span>
+                                  </div>
+                              ))
+                          )}
+                      </div>
                   </div>
                 </div>
               </div>

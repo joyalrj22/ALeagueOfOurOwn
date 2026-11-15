@@ -17,10 +17,11 @@ exports.handler = async (event, context) => {
       
       const league = await leagueRepository.getLeagueById(leagueId);
       const table = await leagueService.calculateTable(leagueId);
+      const entries = await leagueRepository.getEntriesByLeagueId(leagueId);
       
       return {
         statusCode: 200,
-        body: JSON.stringify({ league, table }),
+        body: JSON.stringify({ league, table, entries }),
       };
     }
 
