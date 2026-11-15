@@ -5,6 +5,10 @@ const Leaderboard = ({ league, table }) => {
   if (!table || table.length === 0) return <div className="text-gray-400">No data available yet.</div>;
 
   const isMatchBased = league?.scoringConfig?.type === 'match';
+  const allowDraws =
+    league?.scoringConfig?.allowDraws !== false &&
+    league?.scoringConfig?.pointsPerDraw !== null &&
+    league?.scoringConfig?.pointsPerDraw !== undefined;
 
   return (
     <div className="bg-slate-900/50 rounded-xl border border-slate-700/50 overflow-hidden backdrop-blur-sm">
@@ -27,7 +31,7 @@ const Leaderboard = ({ league, table }) => {
               <th className="px-5 py-3 text-center">Played</th>
               {isMatchBased && (
                 <>
-                  <th className="px-5 py-3 text-center">W/D/L</th>
+                  <th className="px-5 py-3 text-center">{allowDraws ? 'W/D/L' : 'W/L'}</th>
                 </>
               )}
               <th className="px-5 py-3 text-right">Points</th>
@@ -53,8 +57,12 @@ const Leaderboard = ({ league, table }) => {
                   <td className="px-5 py-4 text-center">
                     <div className="flex justify-center gap-1.5 text-xs">
                       <span className="text-green-500">{row.wins}</span>
-                      <span className="text-slate-600">/</span>
-                      <span className="text-slate-400">{row.draws}</span>
+                      {allowDraws && (
+                        <>
+                          <span className="text-slate-600">/</span>
+                          <span className="text-slate-400">{row.draws}</span>
+                        </>
+                      )}
                       <span className="text-slate-600">/</span>
                       <span className="text-red-500">{row.losses}</span>
                     </div>

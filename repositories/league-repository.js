@@ -7,8 +7,8 @@ const leagueRepository = {
   addEntry: (entry) => {
     const newEntry = {
       id: `e${mockData.entries.length + 1}`,
+      timestamp: entry.timestamp || new Date().toISOString(),
       ...entry,
-      timestamp: new Date().toISOString(),
     };
     mockData.entries.push(newEntry);
     return newEntry;

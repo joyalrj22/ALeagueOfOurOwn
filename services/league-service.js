@@ -69,6 +69,14 @@ const leagueService = {
     const league = leagueRepository.getLeagueById(leagueId);
     if (!league) throw new Error("League not found");
 
+    if (
+      league.scoringConfig?.type === "match" &&
+      league.scoringConfig?.allowDraws === false &&
+      entryData.result === "draw"
+    ) {
+      throw new Error("Draws are not allowed in this league");
+    }
+
     // For match type, we usually want to record both sides.
     // However, for simplicity in this MVP, we'll just record what the admin sends.
     const entry = leagueRepository.addEntry({
